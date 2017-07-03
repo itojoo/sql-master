@@ -68,7 +68,7 @@ $(function () {
     });
     $('table .delete').on('click',function(){
         var uid = $(this).parents('tr').attr('data-id');
-        location.href = 'include/db_delete.php?uid='+uid;
+        location.href = 'include/bbs_act.php?mod=del&uid='+uid;
     });
 });
 </script>
@@ -78,15 +78,47 @@ $(function () {
     <a href="bbs_frm.php">새글쓰기</a> <a href="bbs_trash.php">휴지통</a>
 </div>
 <?php
-$sql= "select uid, `name`, title, content, date_add from board WHERE date_delete is NULL";
+
+$page=$_GET['page'];
+$page=($page)?$page:1;
+
+$L_step=2;
+$L_first=($page-1)*$L_step;
+
+$sql= "
+	select 
+		count(*)
+	from 
+		board 
+	WHERE 
+		date_delete is NULL 
+	";
+$result = mysqli_query($conn,$sql);
+if($row=mysqli_fetch_array($result))
+{
+	$tCnt=$row[0]/$L_step;
+}
+
+$sql= "
+	select 
+		uid, `name`, title, content, date_add 
+	from 
+		board 
+	WHERE 
+		date_delete is NULL 
+	limit $L_first,$L_step
+	";
 $result = mysqli_query($conn,$sql);
 if (!$result) {
     printf("Error: %s\n", mysqli_error($con));
     exit();
 }
-echo "<table>
+echo "
+	$page / $tCnt
+	<table>
         <tr>
 		    <th><input type='checkbox' name='checkall' onclick='CheckAll()'></th>
+			<th>uid</th>
 			<th>이름</th>
 			<th>제목</th>
 			<th>내용</th>
@@ -98,6 +130,7 @@ echo "<table>
 		echo "
 		<tr data-id='{$row['uid']}'>
 		    <td><input type='checkbox' name='unit[]' id='item-{$row['uid']}'></td>
+			<td>{$row['uid']}</td>
 			<td>{$row['name']}</td>
 			<td>{$row['title']}</td>
 			<td>{$row['content']}</td>

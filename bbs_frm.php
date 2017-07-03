@@ -31,7 +31,7 @@ if($uid)
 <link rel="stylesheet" type="text/css" href="https://s.pstatic.net/nm/css/w_g17062901.css">
 </head>
 <body>
-<form action="include/db_insert.php" method="get">
+<form action="include/bbs_act.php" method="get">
 	<input type="hidden" name="mod" value="<?=$mod?>">
 	<input type="hidden" name="uid" value="<?=$uid?>">
     <label for="name">이름 : </label><input type="text" name="name" value="<?=$name?>">
