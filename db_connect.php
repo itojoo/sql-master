@@ -7,11 +7,10 @@
  */
 $db_host = "127.0.0.1";
 $db_user = "root";
-$db_password = "";
+$db_password = "sutoset";
 $db_name = "firstdb";
-$conn = mysqli_connect($db_host,$db_user,$db_password,$db_name);
-if (mysqli_connect_errno($conn)){
-    echo "데이터 베이스 연결 실패".mysqli_connect_errno();
-}else{
-    echo "성공~!";
+$conn = new mysqli($db_host,$db_user,$db_password,$db_name);
+if ($mysqli->connect_errno) {
+    printf("Connect failed: %s\n", $mysqli->connect_error);
+    exit();
 }

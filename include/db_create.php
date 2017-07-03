@@ -9,7 +9,7 @@ header("Content-Type: text/html; charset=UTF-8");
 
 $db_host = "127.0.0.1";
 $db_user = "root";
-$db_password = "apmsetup";
+$db_password = "autoset";
 $db_name = "firstboard";
 $conn = mysqli_connect($db_host,$db_user,$db_password);
 if (mysqli_connect_errno()){
