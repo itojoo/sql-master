@@ -81,9 +81,11 @@ $(function () {
 
 $page=$_GET['page'];
 $page=($page)?$page:1;
+//$page = ($_GET['page'])?$_GET['page']:1;
 
-$L_step=2;
-$L_first=($page-1)*$L_step;
+$list=2;
+$block = 3;
+$L_first=($page-1)*$list;
 
 $sql= "
 	select 
@@ -96,7 +98,19 @@ $sql= "
 $result = mysqli_query($conn,$sql);
 if($row=mysqli_fetch_array($result))
 {
-	$tCnt=$row[0]/$L_step;
+	$pageNum=ceil($row[0]/$list); //총 페이지
+    $blockNum = ceil($pageNum/$block); // 총 블록
+    $nowBlock = ceil($page/$block); //현재 페이지 블록 번호
+
+    $s_page = ($nowBlock * $block) - ($block - 1);
+
+    if ($s_page <= 1) {
+        $s_page = 1;
+    }
+    $e_page = $nowBlock*$block;
+    if ($pageNum <= $e_page) {
+        $e_page = $pageNum;
+    }
 }
 
 $sql= "
@@ -106,7 +120,7 @@ $sql= "
 		board 
 	WHERE 
 		date_delete is NULL 
-	limit $L_first,$L_step
+	limit $L_first,$list
 	";
 $result = mysqli_query($conn,$sql);
 if (!$result) {
@@ -114,7 +128,7 @@ if (!$result) {
     exit();
 }
 echo "
-	$page / $tCnt
+	$page / $pageNum
 	<table>
         <tr>
 		    <th><input type='checkbox' name='checkall' onclick='CheckAll()'></th>
@@ -140,10 +154,19 @@ echo "
 		";
 	}
 echo "</table>";
+?>
 
-if (isset($_POST['uid'])){
-    echo $_POST['uid'];
+<a href="<?=$PHP_SELP?>?page=<?=$s_page-1?>">이전</a>
+<? for ($p=$s_page; $p<=$e_page; $p++) {
+    ?>
+
+    <a href="<?=$PHP_SELP?>?page=<?=$p?>"><?=$p?></a>
+
+    <?php
 }
 ?>
+<a href="<?=$PHP_SELP?>?page=<?=$e_page+1?>">다음</a>
+
+
 </body>
 </html>
