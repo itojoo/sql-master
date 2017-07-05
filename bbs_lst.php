@@ -87,6 +87,7 @@ $list=2;
 $block = 3;
 $L_first=($page-1)*$list;
 
+
 $sql= "
 	select 
 		count(*)
@@ -98,18 +99,19 @@ $sql= "
 $result = mysqli_query($conn,$sql);
 if($row=mysqli_fetch_array($result))
 {
-	$pageNum=ceil($row[0]/$list); //총 페이지
-    $blockNum = ceil($pageNum/$block); // 총 블록
+	$totalPage=ceil($row[0]/$list); //총 페이지
+    $totalBlock = ceil($totalPage/$block); // 총 블록
     $nowBlock = ceil($page/$block); //현재 페이지 블록 번호
 
-    $s_page = ($nowBlock * $block) - ($block - 1);
+    $s_page = ($nowBlock * $block) - ($block - 1); // 시작 페이지 번호
 
     if ($s_page <= 1) {
         $s_page = 1;
-    }
-    $e_page = $nowBlock*$block;
-    if ($pageNum <= $e_page) {
-        $e_page = $pageNum;
+    }//필요한지 모르겠음..
+    
+    $e_page = $nowBlock*$block; // 블록의 마지막 페이지 번호
+    if ($totalPage <= $e_page) { // 총 페이지가 현재 블록의 마지막 페이지 번호보다 작을때
+        $e_page = $totalPage;
     }
 }
 
@@ -128,7 +130,7 @@ if (!$result) {
     exit();
 }
 echo "
-	$page / $pageNum
+	$page / $totalPage
 	<table>
         <tr>
 		    <th><input type='checkbox' name='checkall' onclick='CheckAll()'></th>
@@ -157,13 +159,14 @@ echo "</table>";
 ?>
 
 <a href="<?=$PHP_SELP?>?page=<?=$s_page-1?>">이전</a>
-<? for ($p=$s_page; $p<=$e_page; $p++) {
-    ?>
+<?
+    for ($p=$s_page; $p<=$e_page; $p++) {
+        ?>
 
     <a href="<?=$PHP_SELP?>?page=<?=$p?>"><?=$p?></a>
 
-    <?php
-}
+        <?
+    }
 ?>
 <a href="<?=$PHP_SELP?>?page=<?=$e_page+1?>">다음</a>
 
