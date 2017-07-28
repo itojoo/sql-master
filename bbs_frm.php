@@ -1,12 +1,15 @@
 <?php
 
-include ('include/db_connect.php');
+include ('db_connect.php');
 
 $uid=$_GET['uid'];
+$re_uid=$_GET['re_uid'];
 $mod="add";
-if($uid)
+$btn_str="글쓰기";
+if($uid || $re_uid)
 {
-	$mod="edt";
+	$mod= ($re_uid)? "re" : "edt";
+	$btn_str="수정";
 	$sql= "select `name`, title, content, date_add from board where uid='$uid'";
 	$result = mysqli_query($conn,$sql);
 	if (!$result) {
@@ -17,7 +20,12 @@ if($uid)
 		$name=$row['name'];
 		$title=$row['title'];
 		$content=$row['content'];
-		
+	}
+	if($re_uid){
+		$name="";
+		$title = "RE_".$title;
+		$content = "";
+		$btn_str="답글";
 	}
 }
 
@@ -31,13 +39,15 @@ if($uid)
 <link rel="stylesheet" type="text/css" href="https://s.pstatic.net/nm/css/w_g17062901.css">
 </head>
 <body>
-<form action="include/bbs_act.php" method="get">
+<form action="bbs_act.php" method="post" enctype="multipart/form-data">
 	<input type="hidden" name="mod" value="<?=$mod?>">
 	<input type="hidden" name="uid" value="<?=$uid?>">
-    <label for="name">이름 : </label><input type="text" name="name" value="<?=$name?>">
-    <label for="title">제목 : </label><input type="text" name="title" value="<?=$title?>"><br>
-    <textarea type="text" name="content" title="내용"><?=$content?></textarea><br>
-    <input type="submit" value="작성">
+	<input type="hidden" name="parent" value="<?=$re_uid?>">
+	<label for="name">이름 : </label><input type="text" name="name" value="<?=$name?>">
+	<label for="title">제목 : </label><input type="text" name="title" value="<?=$title?>"><br>
+	<textarea type="text" name="content" title="내용"><?=$content?></textarea><br>
+	<input type="file" size=100 name="upload"><br>
+	<input type="submit" value="<?=$btn_str?>">
 </form>
 
 </body>

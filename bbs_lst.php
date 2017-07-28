@@ -1,11 +1,12 @@
 <?php
 
-include ('include/db_connect.php');?>
+include ('db_connect.php');?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Title</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <link rel="stylesheet" href="css/sql.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -68,108 +69,163 @@ $(function () {
     });
     $('table .delete').on('click',function(){
         var uid = $(this).parents('tr').attr('data-id');
-        location.href = 'include/bbs_act.php?mod=del&uid='+uid;
+        location.href = 'bbs_act.php?mod=del&uid='+uid;
     });
 });
 </script>
 </head>
 <body>
 <div>
-    <a href="bbs_frm.php">새글쓰기</a> <a href="bbs_trash.php">휴지통</a>
+    <a href="bbs_frm.php" class="btn btn-default">새글쓰기</a> <a href="bbs_trash.php" class="btn btn-default">휴지통</a>
 </div>
 <?php
 
 $page=$_GET['page'];
+$search_var= $_GET['search_var'];
+$search_val= $_GET['search_val'];
+
 $page=($page)?$page:1;
 //$page = ($_GET['page'])?$_GET['page']:1;
 
-$list=2;
-$block = 3;
+$list=10;
+$block = 5;
 $L_first=($page-1)*$list;
-
-
-$sql= "
-	select 
-		count(*)
-	from 
-		board 
-	WHERE 
-		date_delete is NULL 
-	";
-$result = mysqli_query($conn,$sql);
-if($row=mysqli_fetch_array($result))
+$str_link="";
+$sql_where = "";
+$tableF =array (
+	"na" => array("이름","name like '%$search_val%'")
+	, "ti" => array("제목","title like '%$search_val%'")
+	, "co" => array("내용","content like '%$search_val%'")
+	, "tc" => array("제목+내용","(title like '%$search_val%' or content like '%$search_val%')")
+);
+if ($search_val)
 {
-	$totalPage=ceil($row[0]/$list); //총 페이지
-    $totalBlock = ceil($totalPage/$block); // 총 블록
-    $nowBlock = ceil($page/$block); //현재 페이지 블록 번호
-
-    $s_page = ($nowBlock * $block) - ($block - 1); // 시작 페이지 번호
-
-    if ($s_page <= 1) {
-        $s_page = 1;
-    }//필요한지 모르겠음..
-    
-    $e_page = $nowBlock*$block; // 블록의 마지막 페이지 번호
-    if ($totalPage <= $e_page) { // 총 페이지가 현재 블록의 마지막 페이지 번호보다 작을때
-        $e_page = $totalPage;
-    }
+	$sql_where = " and ({$tableF[$search_var][1]})";
+	$str_link	= "search_var=$search_var&search_val=$search_val";
 }
 
 $sql= "
 	select 
-		uid, `name`, title, content, date_add 
+		count(*) cnt
+	from 
+		board 
+	WHERE 1=1
+		and date_delete is NULL 
+		$sql_where
+	";
+$result = mysqli_query($conn,$sql);
+$rowCnt = 0;
+
+if($row=mysqli_fetch_array($result))
+{
+	$rowCnt = $row['cnt'];						// 총 레코드 카운트
+	$totalPage=ceil($rowCnt/$list);			//총 페이지
+}
+
+$sql= "
+	select 
+		uid, `name`, title, content, date_add, parent, step, lvl, ref
 	from 
 		board 
 	WHERE 
 		date_delete is NULL 
+		$sql_where
+	order by ref desc, step asc
 	limit $L_first,$list
 	";
+	echo $sql;
 $result = mysqli_query($conn,$sql);
 if (!$result) {
     printf("Error: %s\n", mysqli_error($con));
     exit();
 }
-echo "
+	$html = "
 	$page / $totalPage
-	<table>
-        <tr>
-		    <th><input type='checkbox' name='checkall' onclick='CheckAll()'></th>
-			<th>uid</th>
-			<th>이름</th>
-			<th>제목</th>
-			<th>내용</th>
-			<th>등록일</th>
-			<th></th>
-		<tr>
-		";
+		<table class=\"table\">
+			<tr>
+				<th><input type='checkbox' name='checkall' onclick='CheckAll()'></th>
+				<th>uid</th>
+				<th>이름</th>
+				<th>제목</th>
+				<th>내용</th>
+				<th>등록일</th>
+				<th></th>
+				<th>parent</th>
+				<th>step</th>
+				<th>lvl</th>
+				<th>ref</th>
+			</tr>
+	";
 	while($row=mysqli_fetch_array($result)){
-		echo "
-		<tr data-id='{$row['uid']}'>
-		    <td><input type='checkbox' name='unit[]' id='item-{$row['uid']}'></td>
-			<td>{$row['uid']}</td>
-			<td>{$row['name']}</td>
-			<td>{$row['title']}</td>
-			<td>{$row['content']}</td>
-			<td>{$row['date_add']}</td>
-			<td><button type='button' class='modify'>수정</button><button type='button'class='delete'>삭제</button></td>
-		<tr>
+		$str_re=str_repeat("&nbsp;", $row['lvl']);//class='step{$row['lvl']}'
+		$html .= "
+			<tr data-id='{$row['uid']}' data-step='{$row['step']}' data-lvl='{$row['lvl']}' >
+				<td><input type='checkbox' name='unit[]' id='item-{$row['uid']}'></td>
+				<td>{$row['uid']}</td>
+				<td>{$row['name']}</td>
+				<td class='title'><a href='bbs_vi.php?uid={$row['uid']}'>$str_re{$row['title']}</a></td>
+				<td class='content'>{$row['content']}</td>
+				<td>{$row['date_add']}</td>
+				<td><button type='button' class='btn btn-default modify'>수정</button> <button type='button'class='btn btn-default delete'>삭제</button></td>
+				<td>{$row['parent']}</td>
+				<td>{$row['step']}</td>
+				<td>{$row['lvl']}</td>
+				<td>{$row['ref']}</td>
+			</tr>
 		";
 	}
-echo "</table>";
-?>
+	$html .= "
+		</table>
+	";
 
-<a href="<?=$PHP_SELP?>?page=<?=$s_page-1?>">이전</a>
+
+	$totalPage=ceil($rowCnt/$list);			//총 페이지
+	$totalBlock = ceil($totalPage/$block);	// 총 블록
+	$nowBlock = ceil($page/$block);			//현재 페이지 블록 번호
+
+	$s_page = $page - floor($block/2);		// 현제 페이지 페이징 중앙 처리 수식
+	$s_page = ($s_page <= 1)?1:$s_page;		// 페이징 시작
+	$e_page = $s_page + $block - 1;			// 페이징 끝
+	$next_page = $e_page + 1;				// next 블럭 페이지
+	if ($totalPage <= $e_page) {			// 총 페이지가 현재 블록의 마지막 페이지 번호보다 작을때
+		$e_page = $totalPage;
+		$next_page = $e_page;
+	}
+?>
+<form name="" >
+<select name="search_var">
 <?
-    for ($p=$s_page; $p<=$e_page; $p++) {
-        ?>
+	foreach ($tableF as $key => $value) {
+		$selected=($key==$search_var)?"selected=selected":"";
+		echo "<option value='$key' $selected>{$value[0]}</option>\n";
+	}
+?>	
+</select> 
+<input type="text" name="search_val" value="<?=$search_val?>">
+<input type="submit" value="검색">
+</form>
 
-    <a href="<?=$PHP_SELP?>?page=<?=$p?>"><?=$p?></a>
-
-        <?
-    }
-?>
-<a href="<?=$PHP_SELP?>?page=<?=$e_page+1?>">다음</a>
-
-
+<?=$html?>
+<ul class="pagination">
+    <li>
+        <a href="<?=$PHP_SELP?>?page=<?=$s_page-1?>&<?=$str_link?>" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+        </a>
+    </li>
+    <? for ($p=$s_page; $p<=$e_page; $p++) {?>
+    <li>
+        <? if($p == $page){	 ?>
+	        <span><?=$p?></span>
+		<? }else{ ?>
+            <a href="<?=$PHP_SELP?>?page=<?=$p?>&<?=$str_link?>"><?=$p?></a>
+        <? } ?>
+    </li>
+    <? } ?>
+    <li>
+        <a href="<?=$PHP_SELP?>?page=<?=$next_page?>&<?=$str_link?>" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+        </a>
+    </li>
+</ul>
 </body>
 </html>

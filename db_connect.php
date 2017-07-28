@@ -7,8 +7,8 @@
  */
 $db_host = "127.0.0.1";
 $db_user = "root";
-$db_password = "sutoset";
-$db_name = "firstdb";
+$db_password = "autoset";
+$db_name = "firstboard";
 $conn = new mysqli($db_host,$db_user,$db_password,$db_name);
 if ($mysqli->connect_errno) {
     printf("Connect failed: %s\n", $mysqli->connect_error);
