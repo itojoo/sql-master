@@ -110,7 +110,35 @@ if ($mod == 'add'){
 	select * from board where ref=2 and lvl<2 and step>2 order by ref, step;  -- 첫 보존값
 	select * from board where ref=2 and lvl>=2 and step>=2 and step < 5; -- 삭제 레코드
 	*/
+	$uid = $_GET['uid'];
+	$sql= "select * from board where uid='$uid'";
+	$result = mysqli_query($conn,$sql);
+	if (!$result) {
+		printf("Error: %s\n", mysqli_error($con));
+		exit();
+	}
+	echo "$sql\n";
+	if($row=mysqli_fetch_array($result)){
+		$ref=$row['ref'];
+		$step=$row['step'];
+		$lvl=$row['lvl'];
+		//$ref=($ref)?$ref:$parent;
+	}
+	echo "ref : $ref step : $step lvl : $lvl";
+
+	$sql= "select max(step) from board where ref='$ref' and lvl<'$lvl' and step>'$step' order by ref, step";
+	$result = mysqli_query($conn,$sql);
+	if (!$result) {
+		printf("Error: %s\n", mysqli_error($con));
+		exit();
+	}
+	if($row=mysqli_fetch_array($result)){
+		$maxstep=$row[0]+1;
+	}
+	echo $maxstep;
 	
+
+
 	$uid = $_GET['uid'];
 	$sql = "
 			UPDATE 
@@ -118,7 +146,7 @@ if ($mod == 'add'){
 			SET 
 				date_delete = NOW()
 			WHERE 
-				uid = '$uid'
+				ref='$ref' and lvl>='$lvl' and step>=2 and step < '$maxstep'
 			";
 }
 
