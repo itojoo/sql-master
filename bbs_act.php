@@ -16,6 +16,7 @@ $name = $_POST['name'];
 $parent = $_POST['parent'];
 
 print_r($_POST);
+echo "<br>";
 
 if ($mod == 'add'){
 	//등록
@@ -33,7 +34,7 @@ if ($mod == 'add'){
 	$sql= "select max(uid) from board ";
 	$result = mysqli_query($conn,$sql);
 	if (!$result) {
-		printf("Error: %s\n", mysqli_error($con));
+		printf("Error: %s<br>", mysqli_error($con));
 		exit();
 	}
 	if($row=mysqli_fetch_array($result)){
@@ -41,13 +42,13 @@ if ($mod == 'add'){
 	}
 	$sql = "
 		INSERT INTO board 
-			(uid, title,content,`name`, date_add, fileName, ref, parent, step,lvl)
+			(uid, title,content,`name`, date_add, file_name, ref, parent, step,lvl)
 		VALUES 
 			('$uid','$title','$content','$name', NOW(),'$uploadfile','$uid','0','0','0')
 		";
 }else if ($mod == 're'){
 	//답변
-	echo "aaaa";
+	echo "답변 추가 시 :: <br>";
 	
 	$uploadfile = $_FILES['upload']['name'];
 	if(move_uploaded_file($_FILES['upload']['tmp_name'],"./upload/".$uploadfile)){
@@ -63,18 +64,33 @@ if ($mod == 'add'){
 	$sql= "select * from board where uid='$parent'";
 	$result = mysqli_query($conn,$sql);
 	if (!$result) {
-		printf("Error: %s\n", mysqli_error($con));
+		printf("Error: %s<br>", mysqli_error($con));
 		exit();
 	}
-	echo "aaaa";
-	if($row=mysqli_fetch_array($result)){
+	/*if($row=mysqli_fetch_array($result)){
 		$ref=$row['ref'];
 		$ref=($ref)?$ref:$parent;
 		$step=$row['step']+1;
 		$lvl=$row['lvl']+1;
-	}
-	echo "lvl : $lvl";
-	$sql = "
+	}*/
+    if($row=mysqli_fetch_array($result)){
+        $ref=$row['ref'];
+        $ref=($ref)?$ref:$parent;
+        $step=$row['step'];
+        $lvl=$row['lvl'];
+    }
+    $sql = "
+		SELECT min(step) from board
+         where ref = $ref
+           and step > $step
+           and lvl <= $lvl 
+	";
+    mysqli_query($conn,$sql);
+    echo "min스탭은 :: $sql <br>";
+
+
+	echo "lvl : $lvl <br>";
+	/*$sql = "
 		UPDATE board
 		SET 
 			STEP = STEP + 1
@@ -82,13 +98,13 @@ if ($mod == 'add'){
 		AND STEP >= '$step'   -- 부모 step
 	";
 	mysqli_query($conn,$sql);
-	echo $sql;
+	echo $sql."<br>";
 	$sql = "
 		INSERT INTO board 
-			(title,content,`name`, date_add, fileName, ref, parent, step,lvl)
+			(title,content,`name`, date_add, file_name, ref, parent, step,lvl)
 		VALUES 
 			('$title','$content','$name', NOW(),'$uploadfile','$ref','$parent','$step', '$lvl')
-		";
+		";*/
 	
 }else if($mod == 'edt'){
 	// 수정
@@ -114,30 +130,31 @@ if ($mod == 'add'){
 	$sql= "select * from board where uid='$uid'";
 	$result = mysqli_query($conn,$sql);
 	if (!$result) {
-		printf("Error: %s\n", mysqli_error($con));
+		printf("Error: %s<br>", mysqli_error($con));
 		exit();
 	}
-	echo "$sql\n";
+	echo "$sql <br>";
 	if($row=mysqli_fetch_array($result)){
 		$ref=$row['ref'];
 		$step=$row['step'];
 		$lvl=$row['lvl'];
 		//$ref=($ref)?$ref:$parent;
 	}
-	echo "ref : $ref step : $step lvl : $lvl";
+	echo "ref : $ref step : $step lvl : $lvl <br>";
 
-	$sql= "select max(step) from board where ref='$ref' and lvl<'$lvl' and step>'$step' order by ref, step";
+	$sql= "select max(step) from board where ref='$ref' and step>'$step' and lvl<='$lvl' order by ref, step";
+
 	$result = mysqli_query($conn,$sql);
+    echo $sql;
 	if (!$result) {
-		printf("Error: %s\n", mysqli_error($con));
+		printf("Error: %s<br>", mysqli_error($con));
 		exit();
 	}
 	if($row=mysqli_fetch_array($result)){
-		$maxstep=$row[0]+1;
+		//$maxstep=$row[0]+1;
+		$maxstep=$row[0];
 	}
-	echo $maxstep;
-	
-
+	echo "지워야할 maxstep 은 :: $maxstep <br>";
 
 	$uid = $_GET['uid'];
 	$sql = "
@@ -146,7 +163,7 @@ if ($mod == 'add'){
 			SET 
 				date_delete = NOW()
 			WHERE 
-				ref='$ref' and lvl>='$lvl' and step>=2 and step < '$maxstep'
+				ref='$ref' and lvl>='$lvl' and step < '$maxstep' -- 5나와야함
 			";
 }
 
@@ -155,6 +172,7 @@ echo $sql;
 
 
 //echo ("<meta http-equiv='Refresh' content='1; URL=../bbs_lst.php'>");
+echo "<a href='bbs_lst.php'>리스트</a>";
 
 //$data = $_GET[];
 //echo ($data);
