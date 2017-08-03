@@ -67,30 +67,26 @@ if ($mod == 'add'){
 		printf("Error: %s<br>", mysqli_error($con));
 		exit();
 	}
-	/*if($row=mysqli_fetch_array($result)){
+	if($row=mysqli_fetch_array($result)){
 		$ref=$row['ref'];
 		$ref=($ref)?$ref:$parent;
-		$step=$row['step']+1;
+		$step1=$row['step']+1;
 		$lvl=$row['lvl']+1;
-	}*/
-    if($row=mysqli_fetch_array($result)){
-        $ref=$row['ref'];
-        $ref=($ref)?$ref:$parent;
-        $step=$row['step'];
-        $lvl=$row['lvl'];
-    }
+	}
     $sql = "
-		SELECT min(step) from board
+		SELECT max(step) from board
          where ref = $ref
-           and step > $step
-           and lvl <= $lvl 
+           and step >= $step1
+           and lvl >= $lvl 
 	";
-    mysqli_query($conn,$sql);
+    $result=mysqli_query($conn,$sql);
     echo "min스탭은 :: $sql <br>";
-
-
+	if($row=mysqli_fetch_array($result)){
+		$step2=$row[0]+1;
+	}
+	$step=($step1<$step2)?$step2:$step1;
 	echo "lvl : $lvl <br>";
-	/*$sql = "
+	$sql = "
 		UPDATE board
 		SET 
 			STEP = STEP + 1
@@ -104,7 +100,7 @@ if ($mod == 'add'){
 			(title,content,`name`, date_add, file_name, ref, parent, step,lvl)
 		VALUES 
 			('$title','$content','$name', NOW(),'$uploadfile','$ref','$parent','$step', '$lvl')
-		";*/
+		";
 	
 }else if($mod == 'edt'){
 	// 수정
